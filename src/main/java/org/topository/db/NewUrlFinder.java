@@ -16,27 +16,46 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class NewUrlFinder {
+public class NewUrlFinder extends SwingWorker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NewUrlFinder.class);
 
-    private static final NewUrlFinder INSTANCE = new NewUrlFinder();
+    private static Restaurant restaurant;
+    private static final NewUrlFinder INSTANCE = new NewUrlFinder(restaurant);
     private final static AtomicReference<Throwable> throwable = new AtomicReference<Throwable>(null);
     private final static AtomicBoolean isDone = new AtomicBoolean(false);
 
     private final static String DUCKDUCKGO_SEARCH_URL = "https://duckduckgo.com/html/?q=";
     private final static String DUCKDUCKGO_FORMAT_URL = "&format=xml";
-    private final static int max = 4;
+//    private Restaurant restaurant;
     private String results;
     private List<RestaurantUrl> restaurantUrls;
     private Elements elements;
 
-    private NewUrlFinder() {
+    private NewUrlFinder(Restaurant restaurant) {
+        this.restaurant = restaurant;
+    }
+
+    /**
+     * Computes a result, or throws an exception if unable to do so.
+     *
+     * <p>
+     * Note that this method is executed only once.
+     *
+     * <p>
+     * Note: this method is executed in a background thread.
+     *
+     * @return the computed result
+     * @throws Exception if unable to compute a result
+     */
+    @Override
+    protected String doInBackground() throws Exception {
+        return null;
     }
 
     public static void main(String[] args) throws Exception {
-        NewUrlFinder urlFinder = new NewUrlFinder();
         Restaurant restaurant = new Restaurant();
+        NewUrlFinder urlFinder = getInstance(restaurant);
         restaurant.setName("African Village Centre Restaurant");
         restaurant.setCity("Adelaide");
 
@@ -44,11 +63,11 @@ public class NewUrlFinder {
 
     }
 
-    public static NewUrlFinder getInstance() {
+    public static NewUrlFinder getInstance(Restaurant restaurant) {
         return NewUrlFinder.INSTANCE;
     }
 
-    public String findUrl(Restaurant restaurant) throws InterruptedException {
+    private String findUrl(Restaurant restaurant) throws InterruptedException {
         SwingWorker<Boolean, RestaurantUrl> worker = this.getUrlSwingWorker(this, restaurant);
         worker.execute();
 
@@ -91,9 +110,6 @@ public class NewUrlFinder {
                         e.printStackTrace();
                     }
                 }
-                for (RestaurantUrl restaurantUrl : restaurantUrls) {
-                    publish(restaurantUrl);
-                }
                 return !restaurantUrls.isEmpty();
             }
 
@@ -105,7 +121,7 @@ public class NewUrlFinder {
         };
     }
 
-    public List<RestaurantUrl> getRestaurantUrls(Restaurant restaurant) {
+    private List<RestaurantUrl> getRestaurantUrls(Restaurant restaurant) {
         NewUrlFinder.LOGGER.info("Running query for " + restaurant.toString());
 //        StringBuilder builder = new StringBuilder("\n");
         SwingUtilities.invokeLater(new Runnable() {
@@ -113,17 +129,6 @@ public class NewUrlFinder {
             public void run() {
                 NewUrlFinder.LOGGER.info("Running query");
                 restaurantUrls = getDuckDuckGoSearchResults(restaurant);
-//                if (!restaurantUrls.isEmpty()) {
-//                    for (int i = 0; i < elements.size(); i++) {
-//                        String url = restaurantUrls.get(i).getUrl();
-//                        if (url != null) {
-//                            builder.append(url + "\n");
-//                        }
-//                    }
-//                    UrlFinder.LOGGER.debug("Builder string = " + builder.toString());
-//                } else {
-//                    builder.append("No URLs found");
-//                }
             }
         });
         return restaurantUrls;

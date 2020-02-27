@@ -91,9 +91,6 @@ public class UrlFinder {
                         e.printStackTrace();
                     }
                 }
-                for (RestaurantUrl restaurantUrl : restaurantUrls) {
-                    publish(restaurantUrl);
-                }
                 return !restaurantUrls.isEmpty();
             }
 
